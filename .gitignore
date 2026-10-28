@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+/.venv
+
+# Donnees d'instance (voir paths.py/app_config.py) - jamais a committer
+/config.json
+/tennis.db
+/tennis.db-wal
+/tennis.db-shm
+/photos/
+/logos/
+
+/build
+/dist

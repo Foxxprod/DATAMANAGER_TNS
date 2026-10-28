@@ -1,0 +1,606 @@
+{
+  "type": "snapshot",
+  "matches": [
+    {
+      "id": 3,
+      "status": "finished",
+      "status_label": "TERMINE",
+      "category": "MS",
+      "category_label": "Simple Messieurs",
+      "is_double": false,
+      "round": "Quarts de finale",
+      "court": "Court 1",
+      "scheduled_date": "2026-11-06",
+      "scheduled_time": "12:00",
+      "started_at": "2026-10-28T23:12:18",
+      "finished_at": "2026-10-28T23:12:18",
+      "duration_seconds": 0,
+      "set_count": 3,
+      "active_set": null,
+      "in_tiebreak": false,
+      "super_tiebreak": false,
+      "tiebreak_target": null,
+      "deciding_point": false,
+      "changeover": false,
+      "last_point_winner": 1,
+      "total_points": 96,
+      "winner": 1,
+      "end_reason": null,
+      "tournament": {
+        "id": 1,
+        "name": "Open de Lyon",
+        "level": "ATP 250",
+        "surface": "Dur (indoor)",
+        "venue": "Palais des Sports de Gerland",
+        "city": "Lyon",
+        "country": "FRA",
+        "country_name": "France",
+        "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "start_date": "2026-11-02",
+        "end_date": "2026-11-08",
+        "courts": [
+          "Central",
+          "Court 1"
+        ],
+        "is_current": true
+      },
+      "format": {
+        "best_of": 3,
+        "sets_to_win": 2,
+        "games_per_set": 6,
+        "tiebreak_enabled": true,
+        "tiebreak_points": 7,
+        "final_set_rule": "tiebreak",
+        "final_set_rule_label": "Tie-break classique (comme les autres sets)",
+        "no_ad": false,
+        "summary": "3 sets · 6 jeux · TB 7 pts"
+      },
+      "teams": [
+        {
+          "index": 0,
+          "tv_long_name": "Nicolas MAHUT",
+          "tv_short_name": "N. MAHUT",
+          "tricodes": [
+            "FRA"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/fr.svg"
+          ],
+          "serving": false,
+          "serving_player": null,
+          "is_winner": false,
+          "retired": false,
+          "sets_won": 0,
+          "games": [
+            6,
+            3,
+            null
+          ],
+          "tiebreak_small": [
+            5,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            5,
+            null,
+            null
+          ],
+          "points": null,
+          "points_raw": null,
+          "break_point": false,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 3,
+              "first_name": "Nicolas",
+              "last_name": "Mahut",
+              "tv_long_name": "Nicolas MAHUT",
+              "tv_short_name": "N. MAHUT",
+              "country": "FRA",
+              "country_name": "France",
+              "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+              "photo_url": null,
+              "best_ranking": 37,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1982-01-21",
+              "age": 44,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "1",
+              "backhand_label": "Revers a une main",
+              "height_cm": 191,
+              "weight_kg": 80,
+              "turned_pro": 2000,
+              "serving": false
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "tv_long_name": "Jannik SINNER",
+          "tv_short_name": "J. SINNER",
+          "tricodes": [
+            "ITA"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/it.svg"
+          ],
+          "serving": false,
+          "serving_player": null,
+          "is_winner": true,
+          "retired": false,
+          "sets_won": 2,
+          "games": [
+            7,
+            6,
+            null
+          ],
+          "tiebreak_small": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            7,
+            null,
+            null
+          ],
+          "points": null,
+          "points_raw": null,
+          "break_point": false,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 2,
+              "first_name": "Jannik",
+              "last_name": "Sinner",
+              "tv_long_name": "Jannik SINNER",
+              "tv_short_name": "J. SINNER",
+              "country": "ITA",
+              "country_name": "Italie",
+              "flag_url": "http://192.168.1.16:8080/flags/it.svg",
+              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-28T23:12:18",
+              "best_ranking": 1,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "2001-08-16",
+              "age": 25,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "2",
+              "backhand_label": "Revers a deux mains",
+              "height_cm": 191,
+              "weight_kg": 77,
+              "turned_pro": 2018,
+              "serving": false
+            }
+          ]
+        }
+      ],
+      "updated_at": "2026-10-28T23:12:18"
+    },
+    {
+      "id": 1,
+      "status": "live",
+      "status_label": "EN COURS",
+      "category": "MS",
+      "category_label": "Simple Messieurs",
+      "is_double": false,
+      "round": "Demi-finales",
+      "court": "Central",
+      "scheduled_date": "2026-11-07",
+      "scheduled_time": "14:00",
+      "started_at": "2026-10-28T23:12:18",
+      "finished_at": null,
+      "duration_seconds": 2,
+      "set_count": 3,
+      "active_set": 2,
+      "in_tiebreak": false,
+      "super_tiebreak": false,
+      "tiebreak_target": null,
+      "deciding_point": false,
+      "changeover": false,
+      "last_point_winner": 1,
+      "total_points": 61,
+      "winner": null,
+      "end_reason": null,
+      "tournament": {
+        "id": 1,
+        "name": "Open de Lyon",
+        "level": "ATP 250",
+        "surface": "Dur (indoor)",
+        "venue": "Palais des Sports de Gerland",
+        "city": "Lyon",
+        "country": "FRA",
+        "country_name": "France",
+        "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "start_date": "2026-11-02",
+        "end_date": "2026-11-08",
+        "courts": [
+          "Central",
+          "Court 1"
+        ],
+        "is_current": true
+      },
+      "format": {
+        "best_of": 3,
+        "sets_to_win": 2,
+        "games_per_set": 6,
+        "tiebreak_enabled": true,
+        "tiebreak_points": 7,
+        "final_set_rule": "tiebreak",
+        "final_set_rule_label": "Tie-break classique (comme les autres sets)",
+        "no_ad": false,
+        "summary": "3 sets · 6 jeux · TB 7 pts"
+      },
+      "teams": [
+        {
+          "index": 0,
+          "tv_long_name": "Gael MONFILS",
+          "tv_short_name": "G. MONFILS",
+          "tricodes": [
+            "FRA"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/fr.svg"
+          ],
+          "serving": true,
+          "serving_player": 0,
+          "is_winner": false,
+          "retired": false,
+          "sets_won": 1,
+          "games": [
+            6,
+            2,
+            null
+          ],
+          "tiebreak_small": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            null,
+            null,
+            null
+          ],
+          "points": "30",
+          "points_raw": 2,
+          "break_point": false,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 1,
+              "first_name": "Gael",
+              "last_name": "Monfils",
+              "tv_long_name": "Gael MONFILS",
+              "tv_short_name": "G. MONFILS",
+              "country": "FRA",
+              "country_name": "France",
+              "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+              "photo_url": "http://192.168.1.16:8080/photos/player_1.png?v=2026-10-28T23:12:18",
+              "best_ranking": 6,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1986-09-01",
+              "age": 40,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "2",
+              "backhand_label": "Revers a deux mains",
+              "height_cm": 193,
+              "weight_kg": 85,
+              "turned_pro": 2004,
+              "serving": true
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "tv_long_name": "Jannik SINNER",
+          "tv_short_name": "J. SINNER",
+          "tricodes": [
+            "ITA"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/it.svg"
+          ],
+          "serving": false,
+          "serving_player": null,
+          "is_winner": false,
+          "retired": false,
+          "sets_won": 0,
+          "games": [
+            4,
+            2,
+            null
+          ],
+          "tiebreak_small": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            null,
+            null,
+            null
+          ],
+          "points": "40",
+          "points_raw": 3,
+          "break_point": true,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 2,
+              "first_name": "Jannik",
+              "last_name": "Sinner",
+              "tv_long_name": "Jannik SINNER",
+              "tv_short_name": "J. SINNER",
+              "country": "ITA",
+              "country_name": "Italie",
+              "flag_url": "http://192.168.1.16:8080/flags/it.svg",
+              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-28T23:12:18",
+              "best_ranking": 1,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "2001-08-16",
+              "age": 25,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "2",
+              "backhand_label": "Revers a deux mains",
+              "height_cm": 191,
+              "weight_kg": 77,
+              "turned_pro": 2018,
+              "serving": false
+            }
+          ]
+        }
+      ],
+      "updated_at": "2026-10-28T23:12:18"
+    },
+    {
+      "id": 2,
+      "status": "scheduled",
+      "status_label": "PROGRAMME",
+      "category": "MD",
+      "category_label": "Double Messieurs",
+      "is_double": true,
+      "round": "Finale",
+      "court": "Central",
+      "scheduled_date": "2026-11-08",
+      "scheduled_time": "17:00",
+      "started_at": null,
+      "finished_at": null,
+      "duration_seconds": null,
+      "set_count": 3,
+      "active_set": null,
+      "in_tiebreak": false,
+      "super_tiebreak": false,
+      "tiebreak_target": null,
+      "deciding_point": false,
+      "changeover": false,
+      "last_point_winner": null,
+      "total_points": 0,
+      "winner": null,
+      "end_reason": null,
+      "tournament": {
+        "id": 1,
+        "name": "Open de Lyon",
+        "level": "ATP 250",
+        "surface": "Dur (indoor)",
+        "venue": "Palais des Sports de Gerland",
+        "city": "Lyon",
+        "country": "FRA",
+        "country_name": "France",
+        "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "start_date": "2026-11-02",
+        "end_date": "2026-11-08",
+        "courts": [
+          "Central",
+          "Court 1"
+        ],
+        "is_current": true
+      },
+      "format": {
+        "best_of": 3,
+        "sets_to_win": 2,
+        "games_per_set": 6,
+        "tiebreak_enabled": true,
+        "tiebreak_points": 7,
+        "final_set_rule": "super_tiebreak",
+        "final_set_rule_label": "Super tie-break en 10 points a la place du set",
+        "no_ad": true,
+        "summary": "3 sets · 6 jeux · TB 7 pts · dernier set : super TB · point decisif"
+      },
+      "teams": [
+        {
+          "index": 0,
+          "tv_long_name": "Nicolas MAHUT / Pierre-Hugues HERBERT",
+          "tv_short_name": "N. MAHUT / P. HERBERT",
+          "tricodes": [
+            "FRA",
+            "FRA"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/fr.svg",
+            "http://192.168.1.16:8080/flags/fr.svg"
+          ],
+          "serving": false,
+          "serving_player": null,
+          "is_winner": false,
+          "retired": false,
+          "sets_won": 0,
+          "games": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_small": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            null,
+            null,
+            null
+          ],
+          "points": null,
+          "points_raw": null,
+          "break_point": false,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 3,
+              "first_name": "Nicolas",
+              "last_name": "Mahut",
+              "tv_long_name": "Nicolas MAHUT",
+              "tv_short_name": "N. MAHUT",
+              "country": "FRA",
+              "country_name": "France",
+              "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+              "photo_url": null,
+              "best_ranking": 37,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1982-01-21",
+              "age": 44,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "1",
+              "backhand_label": "Revers a une main",
+              "height_cm": 191,
+              "weight_kg": 80,
+              "turned_pro": 2000,
+              "serving": false
+            },
+            {
+              "id": 4,
+              "first_name": "Pierre-Hugues",
+              "last_name": "Herbert",
+              "tv_long_name": "Pierre-Hugues HERBERT",
+              "tv_short_name": "P. HERBERT",
+              "country": "FRA",
+              "country_name": "France",
+              "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
+              "photo_url": null,
+              "best_ranking": 36,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1991-03-18",
+              "age": 35,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "2",
+              "backhand_label": "Revers a deux mains",
+              "height_cm": 188,
+              "weight_kg": null,
+              "turned_pro": 2010,
+              "serving": false
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "tv_long_name": "Marcel GRANOLLERS / Horacio ZEBALLOS",
+          "tv_short_name": "M. GRANOLLERS / H. ZEBALLOS",
+          "tricodes": [
+            "ESP",
+            "ARG"
+          ],
+          "flag_urls": [
+            "http://192.168.1.16:8080/flags/es.svg",
+            "http://192.168.1.16:8080/flags/ar.svg"
+          ],
+          "serving": false,
+          "serving_player": null,
+          "is_winner": false,
+          "retired": false,
+          "sets_won": 0,
+          "games": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_small": [
+            null,
+            null,
+            null
+          ],
+          "tiebreak_points": [
+            null,
+            null,
+            null
+          ],
+          "points": null,
+          "points_raw": null,
+          "break_point": false,
+          "set_point": false,
+          "match_point": false,
+          "players": [
+            {
+              "id": 5,
+              "first_name": "Marcel",
+              "last_name": "Granollers",
+              "tv_long_name": "Marcel GRANOLLERS",
+              "tv_short_name": "M. GRANOLLERS",
+              "country": "ESP",
+              "country_name": "Espagne",
+              "flag_url": "http://192.168.1.16:8080/flags/es.svg",
+              "photo_url": null,
+              "best_ranking": 19,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1986-04-12",
+              "age": 40,
+              "hand": "R",
+              "hand_label": "Droitier",
+              "backhand": "2",
+              "backhand_label": "Revers a deux mains",
+              "height_cm": 190,
+              "weight_kg": null,
+              "turned_pro": null,
+              "serving": false
+            },
+            {
+              "id": 6,
+              "first_name": "Horacio",
+              "last_name": "Zeballos",
+              "tv_long_name": "Horacio ZEBALLOS",
+              "tv_short_name": "H. ZEBALLOS",
+              "country": "ARG",
+              "country_name": "Argentine",
+              "flag_url": "http://192.168.1.16:8080/flags/ar.svg",
+              "photo_url": null,
+              "best_ranking": 39,
+              "gender": "M",
+              "gender_label": "Homme",
+              "birth_date": "1985-04-27",
+              "age": 41,
+              "hand": "L",
+              "hand_label": "Gaucher",
+              "backhand": "1",
+              "backhand_label": "Revers a une main",
+              "height_cm": 188,
+              "weight_kg": null,
+              "turned_pro": null,
+              "serving": false
+            }
+          ]
+        }
+      ],
+      "updated_at": "2026-10-28T23:12:18"
+    }
+  ]
+}

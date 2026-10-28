@@ -1,0 +1,74 @@
+TENNIS DATA MANAGER - CONTEXTE DU PROJET
+=======================================
+
+1. OBJECTIF
+-----------
+
+Logiciel de gestion des donnees de matchs de tennis, destine a alimenter
+d'autres systemes (habillages TV notamment) via WebSocket, fichiers ou API
+HTTP. Plusieurs matchs peuvent se derouler en parallele.
+
+Briques prevues :
+  - administration web des matchs (creation/edition)        -> FAIT (v1)
+  - interface d'arbitrage operateur (saisie des points)      -> FAIT (v1)
+  - diffusion des donnees : WebSocket                         -> FAIT (v1)
+                            API HTTP, fichiers                 -> A FAIRE
+
+Interface : NiceGUI, style repris de Biath Control Center (header
+bg-slate-900 arrondi, logo Foxxprod, boutons ronds, cartes rounded-2xl,
+theme clair/sombre). Base de donnees : SQLite (module standard sqlite3).
+
+
+2. FICHIERS
+-----------
+
+- main.py        : point d'entree, pages "/" (accueil), "/umpire" et
+                   "/umpire/<id>" (arbitrage), "/matches", "/players",
+                   "/tournaments", fichiers statiques /flags
+- home.py        : accueil sans header (tournoi en cours, date/heure,
+                   logo, boutons ARBITRAGE/GESTION DES DONNEES, credits)
+- layout.py      : theme, header des pages admin (onglets a gauche),
+                   Parametres, helpers de style
+                   (cartes, carte de liste, drapeau flag())
+- forms.py       : briques des fenetres de saisie (squelette, date/heure,
+                   option "Ajouter..." epinglee en tete d'un select)
+- admin.py       : liste des matchs + fenetre match (tournoi et joueurs
+                   choisis dans leurs listes, creables sans quitter)
+- players.py     : annuaire des joueurs + fenetre joueur (recherche
+                   Wikidata, noms TV long/court auto ou manuels)
+- tournaments.py : tournois (surface, lieu, dates, courts) + fenetre
+- api.py         : WebSocket ws://<poste>:8080/ws (instantane a la
+                   connexion puis match complet a chaque changement),
+                   documente dans docs/websocket.md + exemple JSON
+- umpire.py      : interface d'arbitrage (selection du match, choix du
+                   service, boutons POINT, annulation, abandon), un poste
+                   par match, signalement d'un match ouvert ailleurs
+- scoring.py     : moteur de score (regles du tennis selon le format),
+                   score recalcule en rejouant les points enregistres
+- scoreboard.py  : tableau des scores (fiche match + arbitrage)
+- events.py      : evenements partages entre pages/postes (tournoi actif,
+                   score modifie)
+- wikidata.py    : recherche/import de fiches joueurs (API Wikidata)
+- media.py       : stockage des images envoyees (fichier en attente puis
+                   definitif, servi en statique)
+- photos.py      : photos des joueurs (PNG 3000x3000, /photos)
+- logos.py       : logos des tournois (redimensionnes 512 px max, /logos)
+- models.py      : dataclasses Match/Player/Tournament/MatchFormat
+- countries.py   : codes pays CIO (FRA, SUI, GER...) -> nom + drapeau
+- database.py    : schema SQLite, migrations (PRAGMA user_version), CRUD
+                   v1 joueurs dans les matchs ; v2 annuaire athletes ;
+                   v3 noms TV, meilleur classement seul ; v4 tournois ;
+                   v5 tournoi actif ; v6 photos ; v7 noms TV toujours
+                   remplis ; v8 logos ; v9 arbitrage (match_points)
+- app_config.py  : config.json (theme, titre du logiciel)
+- paths.py       : chemins dev / executable PyInstaller
+- assets/flags   : drapeaux SVG (pack flag-icons 7.2.3, licence MIT)
+
+Donnees d'instance (non commitees) : config.json, tennis.db, photos/, logos/.
+
+
+3. LANCEMENT
+------------
+
+    pip install -r requirements.txt
+    python main.py         -> http://localhost:8080

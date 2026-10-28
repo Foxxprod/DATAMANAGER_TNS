@@ -1,0 +1,28 @@
+Ressources graphiques tierces
+=============================
+
+flags/ (drapeaux)
+    Pack flag-icons 7.2.3 - https://github.com/lipis/flag-icons
+    Licence MIT (voir flags/LICENSE)
+
+home_background.jpg (fond de la page d'accueil)
+    "The Greenbrier resort's Center tennis court" - auteur : Jumpy542
+    https://commons.wikimedia.org/wiki/File:The_Greenbrier_resort%27s_Center_tennis_court.jpg
+    Licence CC0 1.0 (domaine public) - aucune attribution requise
+
+foxxprod_logo_transparent.png
+    Derive de foxxprod_logo.png (fond noir rendu transparent)
+
+psav_logo.png
+    Logo du Pole superieur audiovisuel de Villefontaine (fourni par l'utilisateur)
+
+favicon.png
+    Derive de psav_logo.png (symbole recadre sur fond blanc arrondi)
+
+psav_logo_tennis.png
+    Derive de psav_logo.png : sphere de la planete remplacee par une balle de
+    tennis (coutures + liseré sous l'anneau qui passe devant)
+
+psav_logo_white.png
+    Derive de psav_logo_tennis.png (blanc sur fond transparent, pour les
+    fonds sombres) - c'est le logo affiche dans le header et l'accueil
