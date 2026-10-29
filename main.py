@@ -7,12 +7,13 @@ import database
 from logos import LOGOS
 from photos import PHOTOS
 from admin import build_match_list
-from app_config import load_config
+from app_config import SERVER_PORT, load_config
 from layout import BACKGROUND_PATH, BACKGROUND_URL, FLAGS_DIR, FLAGS_URL, build_header
 from paths import resource_path
 from home import build_home
 from players import build_player_list
 from tournaments import build_tournament_list
+from system_page import build_system_page
 from umpire import build_umpire_match, build_umpire_selection
 
 #icone de l'onglet du navigateur : symbole du logo du Pole superieur
@@ -54,6 +55,12 @@ def umpire_page() -> None:
 @ui.page("/umpire/{match_id}")
 def umpire_match_page(match_id: int) -> None:
     build_umpire_match(config, match_id)
+
+
+#administration : adresses du serveur, etat du serveur, constantes du PC
+@ui.page("/admin")
+def admin_page() -> None:
+    build_system_page(config)
 
 
 @ui.page("/matches")
@@ -98,7 +105,7 @@ def _ignore_connection_reset(loop: asyncio.AbstractEventLoop, context: dict) -> 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
         title="Tennis Data Manager",
-        port=8080,
+        port=SERVER_PORT,
         reload=False,
         favicon=ICON_PATH if ICON_PATH.exists() else None,
     )

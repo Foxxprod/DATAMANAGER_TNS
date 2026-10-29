@@ -78,6 +78,11 @@ NAV_ITEMS = [
     ("players", "JOUEURS", "groups", "/players"),
     ("tournaments", "TOURNOIS", "emoji_events", "/tournaments"),
 ]
+#page d'administration (adresses, etat du serveur, PC)
+ADMIN_NAV_ITEMS = [
+    ("home", "ACCUEIL", "home", "/"),
+    ("admin", "ADMINISTRATION", "admin_panel_settings", "/admin"),
+]
 #pages d'arbitrage
 UMPIRE_NAV_ITEMS = [
     ("home", "ACCUEIL", "home", "/"),
@@ -178,6 +183,14 @@ def page_body() -> ui.column:
 #drapeau du pays (code a 3 lettres, voir countries.py). Sans drapeau
 #connu (pays vide, "NEU"...), une case vide de meme taille garde
 #l'alignement des noms dans les listes.
+#image simple (balise <img>) pour les photos et logos des pages rafraichies
+#en direct : q-img (ui.image) est recree a chaque refresh et recharge l'image
+#avec un fondu (clignotement) ; une <img> a la meme adresse est affichee
+#immediatement depuis le cache du navigateur. `fit` : cover / contain
+def plain_image(url: str, fit: str = "cover") -> ui.element:
+    return ui.element("img").props(f'src="{url}" alt="" draggable="false"').classes(f"object-{fit}")
+
+
 def flag(country: str, size: str = "h-3.5 w-[1.2rem]") -> ui.element:
     iso = flag_iso(country)
     classes = f"{size} shrink-0 rounded-[2px]"
@@ -200,9 +213,7 @@ def tournament_logo(tournament: Tournament | None, size: str = "h-10 w-10", plac
             f"{size} shrink-0 rounded-lg bg-white p-1 flex items-center justify-center "
             "border border-slate-200 shadow-sm"
         ):
-            ui.image(LOGOS.file_url(tournament.logo, tournament.updated_at)).classes("w-full h-full").props(
-                "fit=contain no-spinner"
-            )
+            plain_image(LOGOS.file_url(tournament.logo, tournament.updated_at), "contain").classes("w-full h-full")
     elif placeholder:
         ui.element("div").classes(f"{size} shrink-0")
 
@@ -303,11 +314,52 @@ FIT_X_SCRIPT = """
 #Renvoie le ui.dark_mode pour pouvoir le basculer en direct (boite de
 #dialogue Parametres). Les cartes restent opaques (blanches/sombres selon
 #le theme) par-dessus la photo.
-def apply_theme(config: dict) -> ui.dark_mode:
+#mise a l'echelle automatique (tablettes, petits ecrans) : chaque page a une
+#taille de reference (largeur, hauteur) ; si la fenetre est plus petite, TOUTE
+#la page est reduite proportionnellement (CSS zoom) pour tenir entiere, et
+#recalculee a chaque redimensionnement / rotation de la tablette. Jamais
+#agrandie au-dela de 100 %. Hauteur 0 : ignoree (listes qui defilent).
+#--app-zoom permet aux hauteurs "plein ecran" de compenser.
+FIT_SCRIPT = """
+<script>
+(() => {
+    const width = %d, height = %d;
+    const fit = () => {
+        const zoom = Math.min(1, window.innerWidth / width, height ? window.innerHeight / height : 1);
+        document.documentElement.style.zoom = zoom;
+        document.documentElement.style.setProperty("--app-zoom", zoom);
+    };
+    window.addEventListener("resize", fit);
+    fit();
+})();
+</script>
+"""
+#tailles de reference (px) : gestion des donnees (header le plus charge),
+#arbitrage (boutons gardes le plus grands possible sur tablette ; l'ecran de
+#match doit tenir en hauteur, sans defilement), accueil (logo + boutons
+#centres en hauteur)
+DATA_FIT = (1500, 0)
+UMPIRE_FIT = (1180, 0)
+UMPIRE_MATCH_FIT = (1180, 860)
+HOME_FIT = (1350, 1000)
+#hauteur du header (px, a l'echelle de la page)
+HEADER_HEIGHT = 72
+
+
+#hauteur "plein ecran" compensee de la mise a l'echelle (sans elle, 100vh
+#dans une page reduite a 80 % ne couvrirait que 80 % de l'ecran)
+#`minus` : hauteur deja occupee (header...), en px a l'echelle de la page
+def full_height(fraction: float = 1.0, minus: int = 0) -> str:
+    return f"calc({fraction * 100:g}vh / var(--app-zoom, 1) - {minus}px)"
+
+
+#`fit` : taille de reference de la page, voir FIT_SCRIPT
+def apply_theme(config: dict, fit: tuple[int, int] = DATA_FIT) -> ui.dark_mode:
     dark_mode = ui.dark_mode(config["dark_mode"])
     ui.query("body").classes("bg-slate-900")
     ui.add_css(BACKGROUND_CSS + FIT_X_CSS)
     ui.add_body_html(FIT_X_SCRIPT)
+    ui.add_body_html(FIT_SCRIPT % fit)
     #meme reset que Biath Control Center : padding gauche/droite seulement,
     #Quasar calcule lui-meme le padding-top qui pousse le contenu sous le
     #header (position fixed)
@@ -328,8 +380,9 @@ def build_header(
     primary_action: tuple[str, Callable] | None = None,
     nav_items: list[tuple[str, str, str, str]] = NAV_ITEMS,
     tournament_selector: bool = True,
+    fit: tuple[int, int] = DATA_FIT,
 ) -> None:
-    dark_mode = apply_theme(config)
+    dark_mode = apply_theme(config, fit)
 
     with ui.dialog() as settings_dialog, ui.card().classes("gap-3 w-[28rem] max-w-[95vw]"):
         ui.label("Parametres").classes("text-lg font-bold")

@@ -52,7 +52,9 @@ def scoreboard(match: Match, state: ScoreState | None, big: bool = False) -> Non
     #super tie-break : ses points sont affiches dans la colonne du set
     labels = state.point_labels(match.format.no_ad) if live and not state.super_tiebreak else ["", ""]
 
-    with ui.column().classes("w-full gap-0 rounded-xl overflow-hidden bg-slate-900 text-white shadow-lg"):
+    #shrink-0 : jamais comprime par une colonne parente qui manque de place
+    #(sinon, en overflow-hidden, il peut disparaitre a une hauteur nulle)
+    with ui.column().classes("w-full shrink-0 gap-0 rounded-xl overflow-hidden bg-slate-900 text-white shadow-lg"):
         #w-full sur chaque ligne : sans lui, chaque ligne prend la largeur de son
         #contenu (colonne NiceGUI alignee a gauche) et les colonnes de score ne
         #tombent plus sous leurs titres des qu'un nom est plus long

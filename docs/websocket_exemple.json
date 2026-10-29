@@ -12,8 +12,8 @@
       "court": "Court 1",
       "scheduled_date": "2026-11-06",
       "scheduled_time": "12:00",
-      "started_at": "2026-10-28T23:12:18",
-      "finished_at": "2026-10-28T23:12:18",
+      "started_at": "2026-10-29T12:42:18",
+      "finished_at": "2026-10-29T12:42:18",
       "duration_seconds": 0,
       "set_count": 3,
       "active_set": null,
@@ -36,7 +36,7 @@
         "country": "FRA",
         "country_name": "France",
         "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
-        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-29T12:42:18",
         "start_date": "2026-11-02",
         "end_date": "2026-11-08",
         "courts": [
@@ -69,6 +69,7 @@
           ],
           "serving": false,
           "serving_player": null,
+          "side": "right",
           "is_winner": false,
           "retired": false,
           "sets_won": 0,
@@ -92,6 +93,29 @@
           "break_point": false,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 41,
+            "aces": 0,
+            "double_faults": 0,
+            "winners": 0,
+            "unforced_errors": 0,
+            "service_points_won": 3,
+            "service_points_played": 50,
+            "return_points_won": 38,
+            "return_points_played": 46,
+            "break_points_won": 9,
+            "break_points_played": 9,
+            "break_points_saved": 0,
+            "break_points_faced": 11,
+            "service_games_won": 0,
+            "service_games_played": 11,
+            "max_points_in_row": 5,
+            "service_points_won_pct": 6,
+            "return_points_won_pct": 83,
+            "break_points_won_pct": 100,
+            "break_points_saved_pct": 0,
+            "service_games_won_pct": 0
+          },
           "players": [
             {
               "id": 3,
@@ -131,6 +155,7 @@
           ],
           "serving": false,
           "serving_player": null,
+          "side": "left",
           "is_winner": true,
           "retired": false,
           "sets_won": 2,
@@ -154,6 +179,29 @@
           "break_point": false,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 55,
+            "aces": 0,
+            "double_faults": 0,
+            "winners": 0,
+            "unforced_errors": 0,
+            "service_points_won": 8,
+            "service_points_played": 46,
+            "return_points_won": 47,
+            "return_points_played": 50,
+            "break_points_won": 11,
+            "break_points_played": 11,
+            "break_points_saved": 0,
+            "break_points_faced": 9,
+            "service_games_won": 1,
+            "service_games_played": 10,
+            "max_points_in_row": 12,
+            "service_points_won_pct": 17,
+            "return_points_won_pct": 94,
+            "break_points_won_pct": 100,
+            "break_points_saved_pct": 0,
+            "service_games_won_pct": 10
+          },
           "players": [
             {
               "id": 2,
@@ -164,7 +212,7 @@
               "country": "ITA",
               "country_name": "Italie",
               "flag_url": "http://192.168.1.16:8080/flags/it.svg",
-              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-28T23:12:18",
+              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-29T12:42:18",
               "best_ranking": 1,
               "gender": "M",
               "gender_label": "Homme",
@@ -182,7 +230,7 @@
           ]
         }
       ],
-      "updated_at": "2026-10-28T23:12:18"
+      "updated_at": "2026-10-29T12:42:18"
     },
     {
       "id": 1,
@@ -195,7 +243,7 @@
       "court": "Central",
       "scheduled_date": "2026-11-07",
       "scheduled_time": "14:00",
-      "started_at": "2026-10-28T23:12:18",
+      "started_at": "2026-10-29T12:42:18",
       "finished_at": null,
       "duration_seconds": 2,
       "set_count": 3,
@@ -219,7 +267,7 @@
         "country": "FRA",
         "country_name": "France",
         "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
-        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-29T12:42:18",
         "start_date": "2026-11-02",
         "end_date": "2026-11-08",
         "courts": [
@@ -252,6 +300,7 @@
           ],
           "serving": true,
           "serving_player": 0,
+          "side": "right",
           "is_winner": false,
           "retired": false,
           "sets_won": 1,
@@ -275,6 +324,29 @@
           "break_point": false,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 34,
+            "aces": 2,
+            "double_faults": 0,
+            "winners": 1,
+            "unforced_errors": 1,
+            "service_points_won": 26,
+            "service_points_played": 33,
+            "return_points_won": 8,
+            "return_points_played": 28,
+            "break_points_won": 2,
+            "break_points_played": 2,
+            "break_points_saved": 0,
+            "break_points_faced": 1,
+            "service_games_won": 6,
+            "service_games_played": 7,
+            "max_points_in_row": 12,
+            "service_points_won_pct": 79,
+            "return_points_won_pct": 29,
+            "break_points_won_pct": 100,
+            "break_points_saved_pct": 0,
+            "service_games_won_pct": 86
+          },
           "players": [
             {
               "id": 1,
@@ -285,7 +357,7 @@
               "country": "FRA",
               "country_name": "France",
               "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
-              "photo_url": "http://192.168.1.16:8080/photos/player_1.png?v=2026-10-28T23:12:18",
+              "photo_url": "http://192.168.1.16:8080/photos/player_1.png?v=2026-10-29T12:42:18",
               "best_ranking": 6,
               "gender": "M",
               "gender_label": "Homme",
@@ -314,6 +386,7 @@
           ],
           "serving": false,
           "serving_player": null,
+          "side": "left",
           "is_winner": false,
           "retired": false,
           "sets_won": 0,
@@ -337,6 +410,29 @@
           "break_point": true,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 27,
+            "aces": 1,
+            "double_faults": 1,
+            "winners": 2,
+            "unforced_errors": 1,
+            "service_points_won": 20,
+            "service_points_played": 28,
+            "return_points_won": 7,
+            "return_points_played": 33,
+            "break_points_won": 1,
+            "break_points_played": 1,
+            "break_points_saved": 0,
+            "break_points_faced": 2,
+            "service_games_won": 5,
+            "service_games_played": 7,
+            "max_points_in_row": 8,
+            "service_points_won_pct": 71,
+            "return_points_won_pct": 21,
+            "break_points_won_pct": 100,
+            "break_points_saved_pct": 0,
+            "service_games_won_pct": 71
+          },
           "players": [
             {
               "id": 2,
@@ -347,7 +443,7 @@
               "country": "ITA",
               "country_name": "Italie",
               "flag_url": "http://192.168.1.16:8080/flags/it.svg",
-              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-28T23:12:18",
+              "photo_url": "http://192.168.1.16:8080/photos/player_2.png?v=2026-10-29T12:42:18",
               "best_ranking": 1,
               "gender": "M",
               "gender_label": "Homme",
@@ -365,7 +461,7 @@
           ]
         }
       ],
-      "updated_at": "2026-10-28T23:12:18"
+      "updated_at": "2026-10-29T12:42:18"
     },
     {
       "id": 2,
@@ -402,7 +498,7 @@
         "country": "FRA",
         "country_name": "France",
         "flag_url": "http://192.168.1.16:8080/flags/fr.svg",
-        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-28T23:12:18",
+        "logo_url": "http://192.168.1.16:8080/logos/tournament_1.png?v=2026-10-29T12:42:18",
         "start_date": "2026-11-02",
         "end_date": "2026-11-08",
         "courts": [
@@ -437,6 +533,7 @@
           ],
           "serving": false,
           "serving_player": null,
+          "side": null,
           "is_winner": false,
           "retired": false,
           "sets_won": 0,
@@ -460,6 +557,29 @@
           "break_point": false,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 0,
+            "aces": 0,
+            "double_faults": 0,
+            "winners": 0,
+            "unforced_errors": 0,
+            "service_points_won": 0,
+            "service_points_played": 0,
+            "return_points_won": 0,
+            "return_points_played": 0,
+            "break_points_won": 0,
+            "break_points_played": 0,
+            "break_points_saved": 0,
+            "break_points_faced": 0,
+            "service_games_won": 0,
+            "service_games_played": 0,
+            "max_points_in_row": 0,
+            "service_points_won_pct": null,
+            "return_points_won_pct": null,
+            "break_points_won_pct": null,
+            "break_points_saved_pct": null,
+            "service_games_won_pct": null
+          },
           "players": [
             {
               "id": 3,
@@ -525,6 +645,7 @@
           ],
           "serving": false,
           "serving_player": null,
+          "side": null,
           "is_winner": false,
           "retired": false,
           "sets_won": 0,
@@ -548,6 +669,29 @@
           "break_point": false,
           "set_point": false,
           "match_point": false,
+          "stats": {
+            "points_won": 0,
+            "aces": 0,
+            "double_faults": 0,
+            "winners": 0,
+            "unforced_errors": 0,
+            "service_points_won": 0,
+            "service_points_played": 0,
+            "return_points_won": 0,
+            "return_points_played": 0,
+            "break_points_won": 0,
+            "break_points_played": 0,
+            "break_points_saved": 0,
+            "break_points_faced": 0,
+            "service_games_won": 0,
+            "service_games_played": 0,
+            "max_points_in_row": 0,
+            "service_points_won_pct": null,
+            "return_points_won_pct": null,
+            "break_points_won_pct": null,
+            "break_points_saved_pct": null,
+            "service_games_won_pct": null
+          },
           "players": [
             {
               "id": 5,
@@ -600,7 +744,7 @@
           ]
         }
       ],
-      "updated_at": "2026-10-28T23:12:18"
+      "updated_at": "2026-10-29T12:42:18"
     }
   ]
 }

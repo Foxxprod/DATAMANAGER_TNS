@@ -40,6 +40,9 @@ theme clair/sombre). Base de donnees : SQLite (module standard sqlite3).
 - api.py         : WebSocket ws://<poste>:8080/ws (instantane a la
                    connexion puis match complet a chaque changement),
                    documente dans docs/websocket.md + exemple JSON
+- system_page.py : page ADMINISTRATION (adresses IP / WebSocket, etat du
+                   serveur, constantes du PC : CPU, memoire, disque, temperature)
+- system_info.py : lecture de ces informations (psutil, LibreHardwareMonitor)
 - umpire.py      : interface d'arbitrage (selection du match, choix du
                    service, boutons POINT, annulation, abandon), un poste
                    par match, signalement d'un match ouvert ailleurs
@@ -59,7 +62,8 @@ theme clair/sombre). Base de donnees : SQLite (module standard sqlite3).
                    v1 joueurs dans les matchs ; v2 annuaire athletes ;
                    v3 noms TV, meilleur classement seul ; v4 tournois ;
                    v5 tournoi actif ; v6 photos ; v7 noms TV toujours
-                   remplis ; v8 logos ; v9 arbitrage (match_points)
+                   remplis ; v8 logos ; v9 arbitrage (match_points) ;
+                   v10 changements de serveur ; v11 nature des points
 - app_config.py  : config.json (theme, titre du logiciel)
 - paths.py       : chemins dev / executable PyInstaller
 - assets/flags   : drapeaux SVG (pack flag-icons 7.2.3, licence MIT)

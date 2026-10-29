@@ -13,6 +13,9 @@ from paths import user_data_path
 
 CONFIG_PATH = user_data_path("config.json")
 
+#port HTTP/WebSocket du serveur (interface web + ws://<poste>:SERVER_PORT/ws)
+SERVER_PORT = 8080
+
 DEFAULT_CONFIG = {
     "dark_mode": False,
     "software_title": "TENNIS - DATA MANAGER",

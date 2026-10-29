@@ -1,6 +1,7 @@
 # Page d'accueil (sans header) : photo de court floutee + masque de
 # couleur en fond, tournoi en cours (nom, ville, dates) + date/heure en haut, logo et 2 gros
-# boutons ARBITRAGE / GESTION DES DONNEES centres en hauteur, credits en bas.
+# boutons ARBITRAGE / GESTION DES DONNEES centres en hauteur, credits en bas
+# et petit bouton ADMINISTRATION en bas a droite (reserve au technicien).
 #
 # Texte toujours clair sur cette page (fond photo assombri, commun a toutes
 # les pages - voir layout.apply_theme), quel que soit le theme clair/sombre
@@ -12,7 +13,7 @@ from nicegui import ui
 
 import database
 from events import tournaments_changed
-from layout import apply_theme, flag, logo, tournament_logo
+from layout import HOME_FIT, apply_theme, flag, full_height, logo, tournament_logo
 from models import DAYS, MONTHS
 
 CREDITS = "Foxx Production"
@@ -35,7 +36,7 @@ def _home_button(title: str, icon: str, color: str, url: str) -> None:
 
 
 def build_home(config: dict) -> None:
-    apply_theme(config)
+    apply_theme(config, HOME_FIT)
     #page fixe a la hauteur de l'ecran, sans defilement : la marge par
     #defaut de NiceGUI (.nicegui-content) ajoutee a une colonne h-screen
     #depassait de quelques pixels (pas de header ici, donc pas de decalage
@@ -43,7 +44,9 @@ def build_home(config: dict) -> None:
     ui.query(".nicegui-content").style("padding: 0;")
     ui.query("body").style("overflow: hidden;")
 
-    with ui.column().classes("relative z-10 w-full h-screen overflow-hidden px-8 py-6 gap-0 items-stretch"):
+    with ui.column().classes("relative z-10 w-full overflow-hidden px-8 py-6 gap-0 items-stretch").style(
+        f"height: {full_height()};"
+    ):
         # --- tournoi en cours / date et heure ---------------------------
         with ui.row(wrap=False).classes("w-full items-start justify-between gap-6"):
             tournament_box = ui.column().classes("gap-1 min-w-0")
@@ -55,11 +58,14 @@ def build_home(config: dict) -> None:
         #positionnes par-dessus, voir ci-dessous)
         ui.element("div").classes("flex-1")
 
-        # --- credits ----------------------------------------------------
-        ui.label(CREDITS).classes(
-            "w-full text-center text-sm font-bold tracking-widest text-slate-300 "
-            "border-t border-white/20 pt-4"
-        )
+        # --- credits + administration (discret, a droite) ----------------
+        with ui.element("div").classes("relative w-full border-t border-white/20 pt-4"):
+            ui.label(CREDITS).classes("w-full text-center text-sm font-bold tracking-widest text-slate-300")
+            ui.button("ADMINISTRATION", icon="admin_panel_settings", color=None,
+                      on_click=lambda: ui.navigate.to("/admin")).props("flat no-caps dense").classes(
+                "absolute right-0 bottom-0 px-3 rounded-lg text-xs font-bold tracking-widest "
+                "text-slate-400 hover:text-violet-300 hover:bg-white/10"
+            )
 
     # --- boutons centres en hauteur sur l'ecran, logo accroche au-dessus ----
     #couche plein ecran : ce sont les BOUTONS qui sont au centre exact de la

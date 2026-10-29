@@ -43,7 +43,7 @@ from models import (
     Tournament,
 )
 from photos import PHOTOS
-from scoring import ScoreState, is_changeover, match_state, point_flags
+from scoring import STAT_KEYS, ScoreState, is_changeover, match_state, match_stats, point_flags
 
 WEBSOCKET_PATH = "/ws"
 #verification du statut "A VENIR" (depend de l'heure, pas d'une action)
@@ -124,8 +124,25 @@ def _duration_seconds(match: Match, now: datetime) -> int | None:
 
 #ligne d'une equipe, prete pour un graphique : identite, service, et une
 #case par set (`games`, `tiebreak_small`...) sur toute la longueur du match
+def _percent(won: int, played: int) -> int | None:
+    return round(100 * won / played) if played else None
+
+
+#statistiques d'une equipe pour un graphique "face a face" : compteurs +
+#pourcentages deja calcules (voir scoring.compute_stats)
+def _serialize_stats(stats: dict[str, int]) -> dict:
+    return {
+        **stats,
+        "service_points_won_pct": _percent(stats["service_points_won"], stats["service_points_played"]),
+        "return_points_won_pct": _percent(stats["return_points_won"], stats["return_points_played"]),
+        "break_points_won_pct": _percent(stats["break_points_won"], stats["break_points_played"]),
+        "break_points_saved_pct": _percent(stats["break_points_saved"], stats["break_points_faced"]),
+        "service_games_won_pct": _percent(stats["service_games_won"], stats["service_games_played"]),
+    }
+
+
 def _serialize_team(
-    match: Match, index: int, state: ScoreState | None, points: list, base_url: str
+    match: Match, index: int, state: ScoreState | None, points: list, base_url: str, stats: dict[str, int]
 ) -> dict:
     team = (match.team1, match.team2)[index]
     set_count = match.format.sets_to_win * 2 - 1
@@ -168,6 +185,10 @@ def _serialize_team(
         "flag_urls": [_flag_url(base_url, player.country) for player in team],
         "serving": serving,
         "serving_player": server_player if serving else None,
+        #cote du court vu depuis la chaise d'arbitre ("left" / "right"), mis a
+        #jour a chaque changement de cote ; null avant le debut du match
+        "side": (None if state is None
+                 else "left" if state.left_team(match.first_left or 0) == index else "right"),
         "is_winner": winner == index,
         "retired": bool(match.end_reason == "RET" and winner is not None and winner != index),
         "sets_won": state.sets_won[index] if state is not None else 0,
@@ -179,6 +200,7 @@ def _serialize_team(
         "break_point": flags["break"],
         "set_point": flags["set"],
         "match_point": flags["match"],
+        "stats": _serialize_stats(stats),
         "players": [
             dict(serialize_player(player, base_url), serving=serving and server_player == position)
             for position, player in enumerate(team)
@@ -195,6 +217,8 @@ def serialize_match(match: Match, base_url: str, now: datetime | None = None) ->
     started = match.first_server is not None
     points = database.get_points(match.id) if started else []
     state = match_state(match, points) if started else None
+    stats = (match_stats(match, points, database.get_natures(match.id)) if started
+             else [{key: 0 for key in STAT_KEYS} for _ in range(2)])
     live = state is not None and not state.finished
     played = [event for event in points if not isinstance(event, tuple)]
     match_format = match.format
@@ -236,7 +260,7 @@ def serialize_match(match: Match, base_url: str, now: datetime | None = None) ->
             "no_ad": match_format.no_ad,
             "summary": match_format.summary,
         },
-        "teams": [_serialize_team(match, index, state, points, base_url) for index in (0, 1)],
+        "teams": [_serialize_team(match, index, state, points, base_url, stats[index]) for index in (0, 1)],
         "updated_at": match.updated_at,
     }
 
@@ -272,6 +296,11 @@ class _Connection:
 
 
 _connections: set[_Connection] = set()
+
+
+#nombre de clients WebSocket connectes (page ADMINISTRATION)
+def connection_count() -> int:
+    return len(_connections)
 
 
 @app.websocket(WEBSOCKET_PATH)

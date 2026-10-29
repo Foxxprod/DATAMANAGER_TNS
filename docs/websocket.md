@@ -60,9 +60,10 @@ match
 ├── tournament { name, logo_url, flag_url… }
 ├── format { best_of, no_ad, final_set_rule… }
 └── teams [2]
-    ├── tv_short_name, tricodes, flag_urls, serving
+    ├── tv_short_name, tricodes, flag_urls, serving, side
     ├── games [6, 2, null], tiebreak_small [null, null, null], points "30"
     ├── break_point, set_point, match_point, is_winner, retired
+    ├── stats { points_won, aces, double_faults, break_points_won… }
     └── players [1 ou 2] { tv_short_name, country, flag_url, photo_url, serving… }
 ```
 
@@ -107,6 +108,7 @@ En simple, une équipe = un joueur.
 | `flag_urls` | URL des drapeaux (SVG), dans le même ordre |
 | `serving` | `true` si l'équipe est au service : afficher le logo de service |
 | `serving_player` | en double, joueur (0/1) de l'équipe qui sert — `null` si l'équipe ne sert pas |
+| `side` | côté du court où se trouve l'équipe, **vu depuis la chaise d'arbitre** : `"left"` ou `"right"` (`null` avant le début du match). Choisi par l'arbitre au début du match, puis mis à jour automatiquement à chaque changement de côté (jeux impairs, fin de set au total impair, tous les 6 points en tie-break) et à chaque correction manuelle. C'est une référence fixe du terrain : utile pour placer un graphique au sol (réalité augmentée) du côté du bon joueur |
 | `sets_won` | nombre de sets gagnés |
 | `games` | jeux de chaque set, une case par set : `[6, 2, null]` = 6 au 1er set, 2 au 2e (en cours), 3e pas joué. Pour un super tie-break terminé, la case contient ses points (ex. 10) |
 | `tiebreak_small` | petit chiffre à afficher dans chaque set : points du **perdant** du tie-break (convention TV), sinon `null`. Ex. `[5, null, null]` = set 1 perdu 6-7, 5 points au tie-break |
@@ -118,11 +120,37 @@ En simple, une équipe = un joueur.
 | `match_point` | si l'équipe gagne le prochain point, elle **gagne le match** (balle de match) |
 | `is_winner` | l'équipe a gagné le match |
 | `retired` | l'équipe a abandonné (afficher « RET. ») |
+| `stats` | statistiques de l'équipe, pour un graphique « face à face » (voir ci-dessous) |
 | `players` | joueurs de l'équipe (voir ci-dessous) |
 
 `break_point` et `set_point` peuvent être vrais en même temps (balle de set
 sur le service adverse). `set_point` est faux quand c'est une balle de match
 (on affiche la plus importante).
+
+### Statistiques (`teams[i].stats`)
+
+Mêmes champs pour les deux équipes : il suffit d'afficher `teams[0].stats`
+contre `teams[1].stats`. Recalculées à chaque point.
+
+| Champ | Description |
+|---|---|
+| `points_won` | points gagnés |
+| `aces` | aces |
+| `double_faults` | doubles fautes |
+| `winners` | coups gagnants |
+| `unforced_errors` | fautes directes |
+| `service_points_won` / `service_points_played` / `service_points_won_pct` | points gagnés au service, sur points joués au service, et en % |
+| `return_points_won` / `return_points_played` / `return_points_won_pct` | points gagnés en retour, idem |
+| `break_points_won` / `break_points_played` / `break_points_won_pct` | balles de break **converties** sur balles de break obtenues (ex. 2/5, 40 %) |
+| `break_points_saved` / `break_points_faced` / `break_points_saved_pct` | balles de break **sauvées** sur balles de break concédées au service |
+| `service_games_won` / `service_games_played` / `service_games_won_pct` | jeux de service gagnés (hors tie-breaks) |
+| `max_points_in_row` | plus longue série de points gagnés d'affilée |
+
+Les pourcentages valent `null` tant qu'il n'y a rien à diviser (ex. aucune
+balle de break). Aces, doubles fautes, coups gagnants et fautes directes
+dépendent de la **nature du point**, saisie (facultativement) par l'arbitre
+après chaque point : ils restent à 0 si elle n'est pas renseignée. Tous les
+autres chiffres sont calculés automatiquement à partir des points joués.
 
 ### `tournament`
 

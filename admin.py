@@ -54,7 +54,7 @@ from models import (
 )
 from players import build_player_dialog, info_tile, player_summary
 from scoreboard import scoreboard
-from scoring import match_state
+from scoring import match_state, match_stats
 from tournaments import build_tournament_dialog
 
 #intervalle (secondes) de verification des changements de la liste des
@@ -102,7 +102,7 @@ def _team(team: list[Player], is_double: bool) -> None:
 LIST_MIN_WIDTH = "min-w-[110rem]"
 LIST_GRID_CLASSES = LIST_GRID_CLASSES_BASE + LIST_MIN_WIDTH + (
     " grid-cols-[8.5rem_7rem_4.5rem_minmax(11rem,1fr)_10rem_10rem_8rem_"
-    "minmax(24rem,2fr)_3.5rem_3.5rem_5.5rem_7.5rem_6rem_5rem]"
+    "minmax(24rem,2fr)_3.5rem_3.5rem_5.5rem_7.5rem_6rem_7.5rem]"
 )
 #(libelle, alignement) - les colonnes de configuration sont centrees
 LIST_COLUMNS = [
@@ -138,6 +138,28 @@ def build_match_list():
             ui.button(
                 "Supprimer", color=None, on_click=lambda: delete_dialog.submit(True)
             ).classes("bg-red-600 text-white")
+
+    with ui.dialog() as reset_dialog, ui.card().classes("gap-3 w-[28rem]"):
+        ui.label("Remettre ce match a zero ?").classes("text-base font-bold")
+        reset_text = ui.label().classes("text-sm text-slate-500")
+        with ui.row().classes("justify-end gap-2 w-full mt-2"):
+            ui.button("Annuler", on_click=lambda: reset_dialog.submit(False)).props("flat")
+            ui.button(
+                "Remettre a zero", color=None, on_click=lambda: reset_dialog.submit(True)
+            ).classes("bg-red-600 text-white")
+
+    #remise a zero d'un match commence/termine : points effaces, statut
+    #"programme", service a rechoisir (meme action que dans l'arbitrage)
+    async def on_reset_click(match: Match) -> None:
+        reset_text.text = (
+            f"{Match.team_name(match.team1)} vs {Match.team_name(match.team2)} - tous les points saisis "
+            "seront effaces et le match repassera en 'programme'. Cette action ne peut pas etre annulee."
+        )
+        if await reset_dialog:
+            database.reset_match(match.id)
+            ui.notify("Match remis a zero", type="info")
+            match_list.refresh()
+            match_scored.emit(match.id)
 
     async def on_delete_click(match: Match) -> None:
         delete_text.text = (
@@ -216,7 +238,7 @@ def build_match_list():
                 day_matches = list(day_matches)
                 _day_header(day, len(day_matches), now.date(), first=index == 0)
                 for match in day_matches:
-                    _match_row(match, now, open_match_dialog, on_delete_click, open_match_profile)
+                    _match_row(match, now, open_match_dialog, on_delete_click, open_match_profile, on_reset_click)
 
     #mise a jour automatique sans recharger la page : relecture de la base
     #toutes les CHECK_INTERVAL secondes, la liste n'est redessinee que si
@@ -280,7 +302,7 @@ def _config_cell(text: str, muted: bool = False) -> None:
 
 #ligne cliquable : ouvre la fiche du match (sauf les boutons d'action, dont
 #le clic ne remonte pas a la ligne - modificateur .stop)
-def _match_row(match: Match, now: datetime, on_edit_click, on_delete_click, on_row_click) -> None:
+def _match_row(match: Match, now: datetime, on_edit_click, on_delete_click, on_row_click, on_reset_click) -> None:
     match_format = match.format
     with ui.element("div").classes(LIST_GRID_CLASSES + LIST_ROW_CLASSES + " cursor-pointer").on(
         "click", lambda m=match: on_row_click(m)
@@ -319,6 +341,11 @@ def _match_row(match: Match, now: datetime, on_edit_click, on_delete_click, on_r
             ui.button(
                 icon="edit", on_click=lambda m=match: on_edit_click(m.id)
             ).props("flat round").tooltip("Modifier")
+            #remise a zero : seulement pour un match deja commence ou termine
+            if match.first_server is not None:
+                ui.button(
+                    icon="restart_alt", color="orange", on_click=lambda m=match: on_reset_click(m)
+                ).props("flat round").tooltip("Remettre le match a zero")
             ui.button(
                 icon="delete", color="red", on_click=lambda m=match: on_delete_click(m)
             ).props("flat round").tooltip("Supprimer")
@@ -327,6 +354,62 @@ def _match_row(match: Match, now: datetime, on_edit_click, on_delete_click, on_r
 # ---------------------------------------------------------------------------
 # Fiche du match (consultation)
 # ---------------------------------------------------------------------------
+
+#ligne de statistique "face a face" : valeur equipe 1 | libelle | valeur equipe 2
+#(barres proportionnelles de part et d'autre)
+STAT_ROWS = [
+    ("Points gagnes", "points_won", None),
+    ("Aces", "aces", None),
+    ("Doubles fautes", "double_faults", None),
+    ("Coups gagnants", "winners", None),
+    ("Fautes directes", "unforced_errors", None),
+    ("Points gagnes au service", "service_points_won", "service_points_played"),
+    ("Points gagnes en retour", "return_points_won", "return_points_played"),
+    ("Balles de break converties", "break_points_won", "break_points_played"),
+    ("Balles de break sauvees", "break_points_saved", "break_points_faced"),
+    ("Jeux de service gagnes", "service_games_won", "service_games_played"),
+    ("Plus longue serie de points", "max_points_in_row", None),
+]
+
+
+def _stats_table(match: Match, stats: list[dict[str, int]]) -> None:
+    def text(team: int, key: str, total_key: str | None) -> str:
+        value = stats[team][key]
+        if total_key is None:
+            return str(value)
+        total = stats[team][total_key]
+        return f"{value}/{total} ({round(100 * value / total)}%)" if total else "0/0"
+
+    with ui.column().classes("w-full gap-2"):
+        ui.label("STATISTIQUES").classes("text-xs font-bold tracking-widest text-slate-500")
+        with ui.column().classes("w-full gap-0 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"):
+            with ui.element("div").classes(
+                "w-full grid grid-cols-[1fr_16rem_1fr] items-center px-4 py-2 bg-slate-100 dark:bg-slate-900/60"
+            ):
+                ui.label(Match.team_name(match.team1)).classes("text-sm font-bold text-right truncate")
+                ui.label("")
+                ui.label(Match.team_name(match.team2)).classes("text-sm font-bold truncate")
+            for label, key, total_key in STAT_ROWS:
+                values = [stats[0][key], stats[1][key]]
+                share = values[0] / sum(values) if sum(values) else 0.5
+                with ui.element("div").classes(
+                    "w-full grid grid-cols-[1fr_16rem_1fr] items-center gap-3 px-4 py-1.5 "
+                    "border-t border-slate-100 dark:border-slate-700/60"
+                ):
+                    with ui.row(wrap=False).classes("items-center justify-end gap-2"):
+                        ui.label(text(0, key, total_key)).classes("text-base font-bold font-mono")
+                        ui.element("div").classes("h-2 rounded-full bg-sky-500").style(f"width: {share * 6}rem")
+                    ui.label(label).classes("text-sm text-center text-slate-500")
+                    with ui.row(wrap=False).classes("items-center gap-2"):
+                        ui.element("div").classes("h-2 rounded-full bg-amber-500").style(
+                            f"width: {(1 - share) * 6}rem"
+                        )
+                        ui.label(text(1, key, total_key)).classes("text-base font-bold font-mono")
+        ui.label(
+            "Aces, doubles fautes, coups gagnants et fautes directes : selon la nature des points saisie "
+            "dans l'arbitrage (facultative)."
+        ).classes("text-xs text-slate-400")
+
 
 #configuration du match : une tuile par parametre du format + categorie
 def _match_config(match: Match) -> None:
@@ -368,7 +451,12 @@ def build_match_profile(match: Match) -> ui.dialog:
     @ui.refreshable
     def live_score() -> None:
         live = current_match()
-        scoreboard(live, match_state(live, database.get_points(live.id)) if live.first_server is not None else None)
+        if live.first_server is None:
+            scoreboard(live, None)
+            return
+        points = database.get_points(live.id)
+        scoreboard(live, match_state(live, points))
+        _stats_table(live, match_stats(live, points, database.get_natures(live.id)))
 
     def on_match_scored(updated_id: int) -> None:
         if updated_id == match.id:
@@ -403,7 +491,10 @@ def build_match_profile(match: Match) -> ui.dialog:
                     ROUND_BUTTON_CLASSES
                 ).props("round").tooltip("Fermer")
 
-        with ui.column().classes("w-full flex-1 min-h-0 overflow-auto p-6 gap-5"):
+        #[&>*]:shrink-0 : la zone defile quand la fiche depasse l'ecran, au lieu
+        #de comprimer ses blocs (le tableau des scores, en overflow-hidden,
+        #etait ecrase a une hauteur nulle des que les statistiques s'ajoutaient)
+        with ui.column().classes("w-full flex-1 min-h-0 overflow-auto p-6 gap-5 [&>*]:shrink-0"):
             #score reel (points saisis dans l'interface d'arbitrage), cases vides
             #si le match n'a pas encore debute ; mis a jour en direct
             live_score()

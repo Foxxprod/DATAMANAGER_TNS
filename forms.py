@@ -6,7 +6,7 @@ from typing import Callable
 
 from nicegui import ui
 
-from layout import ROUND_BUTTON_CLASSES
+from layout import ROUND_BUTTON_CLASSES, plain_image
 from media import MediaError, MediaStore
 from models import format_date, parse_date
 
@@ -195,7 +195,7 @@ class ImageField:
             else:
                 url = None
             if url:
-                ui.image(url).classes("w-full h-full").props(f"fit={self.fit}")
+                plain_image(url, self.fit).classes("w-full h-full")
             else:
                 ui.icon(self.placeholder_icon).classes("text-6xl text-slate-400")
         self.remove_button.set_visibility(url is not None)

@@ -19,6 +19,8 @@
 #   - service : alterne a chaque jeu ; en tie-break, le premier serveur sert
 #     1 point puis alternance tous les 2 points ; l'equipe qui a servi en
 #     premier dans le tie-break recoit au premier jeu du set suivant
+#   - cotes : changement apres chaque jeu impair du set, a la fin d'un set au
+#     total de jeux impair (ex: 6-3, 7-6) et tous les 6 points en tie-break
 
 from dataclasses import dataclass, field
 
@@ -52,6 +54,14 @@ class ScoreState:
     doubles: bool = True
     winner: int | None = None
     total_points: int = 0
+    #True quand les equipes ont change de cote par rapport au debut du match
+    #(nombre impair de changements, automatiques ou corriges a la main)
+    ends_swapped: bool = False
+
+    #equipe a GAUCHE vu depuis la chaise d'arbitre ; `first_left` : equipe a
+    #gauche au debut du match
+    def left_team(self, first_left: int) -> int:
+        return first_left ^ int(self.ends_swapped)
 
     #equipe et joueur au service pour le prochain point
     @property
@@ -106,6 +116,8 @@ def _end_set(state: ScoreState, fmt: MatchFormat, team: int, tiebreak: list[int]
     state.tiebreaks.append(tiebreak)
     state.super_tiebreak_sets.append(state.super_tiebreak)
     state.sets_won[team] += 1
+    if sum(state.sets[-1]) % 2 == 1:
+        state.ends_swapped = not state.ends_swapped
     state.games = [0, 0]
     state.points = [0, 0]
     state.in_tiebreak = False
@@ -130,6 +142,8 @@ def _end_game(state: ScoreState, fmt: MatchFormat, team: int) -> None:
     if won >= target and won - lost >= 2:
         _end_set(state, fmt, team, None)
         return
+    if (won + lost) % 2 == 1:
+        state.ends_swapped = not state.ends_swapped
     if won == target and lost == target:
         final = _is_final_set(state, fmt)
         rule = fmt.final_set_rule if final else "tiebreak"
@@ -164,6 +178,8 @@ def apply_point(state: ScoreState, fmt: MatchFormat, team: int) -> None:
     if state.in_tiebreak:
         if won >= state.tiebreak_target and won - lost >= 2:
             _end_tiebreak(state, fmt, team)
+        elif (won + lost) % 6 == 0:
+            state.ends_swapped = not state.ends_swapped
         return
     if (won >= 4 and fmt.no_ad) or (won >= 4 and won - lost >= 2):
         _end_game(state, fmt, team)
@@ -189,7 +205,16 @@ def set_server(state: ScoreState, team: int, player: int) -> None:
 
 
 #Evenements d'un match : un entier = point gagne par cette equipe ; un tuple
-#("server", equipe, joueur) = changement de serveur manuel (voir set_server).
+#("server", equipe, joueur) = changement de serveur manuel (voir set_server) ;
+#("sides",) = inversion manuelle des cotes (correction).
+def apply_event(state: ScoreState, event) -> None:
+    if event[0] == "server":
+        _, team, player = event
+        set_server(state, team, player)
+    elif event[0] == "sides":
+        state.ends_swapped = not state.ends_swapped
+
+
 #`first_server` : equipe qui sert le premier jeu ; `first_players` : pour
 #chaque equipe, joueur (0/1) qui sert en premier quand l'equipe sert.
 def compute_state(
@@ -201,8 +226,7 @@ def compute_state(
         _start_tiebreak(state, SUPER_TIEBREAK_POINTS, super_tiebreak=True)
     for event in points:
         if isinstance(event, tuple):
-            _, team, player = event
-            set_server(state, team, player)
+            apply_event(state, event)
         else:
             apply_point(state, fmt, event)
     return state
@@ -264,3 +288,94 @@ def is_changeover(state: ScoreState, points: list) -> bool:
         return False
     total = sum(state.games)
     return total % 2 == 1 or (total == 0 and bool(state.sets) and sum(state.sets[-1]) % 2 == 1)
+
+
+# ---------------------------------------------------------------------------
+# Statistiques
+# ---------------------------------------------------------------------------
+
+#natures d'un point saisies dans l'arbitrage (facultatives) : "" = non precisee
+POINT_NATURES = {
+    "ace": "Ace",
+    "double_fault": "Double faute",
+    "winner": "Coup gagnant",
+    "unforced_error": "Faute directe",
+}
+
+STAT_KEYS = [
+    "points_won", "aces", "double_faults", "winners", "unforced_errors",
+    "service_points_won", "service_points_played", "return_points_won", "return_points_played",
+    "break_points_won", "break_points_played", "break_points_saved", "break_points_faced",
+    "service_games_won", "service_games_played", "max_points_in_row",
+]
+
+
+#statistiques des 2 equipes en UN seul passage sur les evenements (rapide
+#meme sur un long match, recalcule a chaque point pour l'API). `natures` :
+#nature de chaque evenement (meme ordre que `events`, "" si non precisee).
+#  - aces / coups gagnants : comptes pour le gagnant du point
+#  - doubles fautes / fautes directes : comptees pour le PERDANT du point
+#  - balle de break : le relanceur gagne le jeu s'il gagne ce point (hors
+#    tie-break) ; "won" = convertie, "saved" = sauvee par le serveur
+#  - jeux de service : hors tie-breaks
+def compute_stats(
+    fmt: MatchFormat, first_server: int, first_players: tuple[int, int], events: list, natures: list[str]
+) -> list[dict[str, int]]:
+    stats = [{key: 0 for key in STAT_KEYS} for _ in range(2)]
+    state = ScoreState(game_server=first_server, server_player=list(first_players))
+    if _is_final_set(state, fmt) and fmt.final_set_rule == "super_tiebreak":
+        _start_tiebreak(state, SUPER_TIEBREAK_POINTS, super_tiebreak=True)
+    streak_team, streak = None, 0
+    for event, nature in zip(events, natures):
+        if isinstance(event, tuple):
+            apply_event(state, event)
+            continue
+        if state.winner is not None:
+            break
+        team, other = event, 1 - event
+        server = state.server[0]
+        receiver = 1 - server
+        in_tiebreak = state.in_tiebreak
+
+        if not in_tiebreak:
+            receiver_points = state.points[receiver] + 1
+            if receiver_points >= 4 and (fmt.no_ad or receiver_points - state.points[server] >= 2):
+                stats[receiver]["break_points_played"] += 1
+                stats[server]["break_points_faced"] += 1
+                if team == receiver:
+                    stats[receiver]["break_points_won"] += 1
+                else:
+                    stats[server]["break_points_saved"] += 1
+
+        stats[team]["points_won"] += 1
+        stats[server]["service_points_played"] += 1
+        stats[receiver]["return_points_played"] += 1
+        stats[server if team == server else receiver][
+            "service_points_won" if team == server else "return_points_won"] += 1
+
+        if nature == "ace":
+            stats[team]["aces"] += 1
+        elif nature == "double_fault":
+            stats[other]["double_faults"] += 1
+        elif nature == "winner":
+            stats[team]["winners"] += 1
+        elif nature == "unforced_error":
+            stats[other]["unforced_errors"] += 1
+
+        streak = streak + 1 if team == streak_team else 1
+        streak_team = team
+        stats[team]["max_points_in_row"] = max(stats[team]["max_points_in_row"], streak)
+
+        games_before = (len(state.sets), list(state.games))
+        apply_point(state, fmt, team)
+        if not in_tiebreak and (len(state.sets), state.games) != games_before:
+            stats[server]["service_games_played"] += 1
+            if team == server:
+                stats[server]["service_games_won"] += 1
+    return stats
+
+
+def match_stats(match, events: list, natures: list[str]) -> list[dict[str, int]]:
+    return compute_stats(
+        match.format, match.first_server or 0, (match.first_server_1, match.first_server_2), events, natures
+    )

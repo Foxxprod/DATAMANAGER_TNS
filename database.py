@@ -5,7 +5,7 @@
 # les futures couches API HTTP/WebSocket tourneront dans le meme processus
 # et liront la meme base. Les requetes sont courtes, pas besoin de pool.
 #
-# Schema (version 10) :
+# Schema (version 11) :
 #   - athletes      : annuaire des joueurs, reutilisables d'un match a l'autre
 #   - tournaments   : tournois crees a l'avance (surface, lieu, courts...),
 #                     dont au plus un marque "en cours" (is_current) ;
@@ -18,7 +18,8 @@
 #                     (ON DELETE RESTRICT)
 #   - match_points  : evenements d'un match dans l'ordre : points joues
 #                     (kind "point", equipe gagnante) et changements de
-#                     serveur manuels (kind "server", equipe + joueur) - le
+#                     serveur manuels (kind "server", equipe + joueur) et
+#                     inversions manuelles des cotes (kind "sides") - le
 #                     score est recalcule a partir d'eux (scoring.py)
 #
 # Les modifications de schema se font via SCHEMA_VERSION/_migrate() pour
@@ -34,7 +35,7 @@ from paths import user_data_path
 
 DB_PATH = user_data_path("tennis.db")
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 12
 
 #version 1 : joueurs saisis directement dans chaque match (table players)
 SCHEMA_V1 = """
@@ -291,6 +292,14 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE match_points ADD COLUMN kind TEXT NOT NULL DEFAULT 'point'")
         conn.execute("ALTER TABLE match_points ADD COLUMN player INTEGER NOT NULL DEFAULT 0")
 
+    #version 11 : nature des points (ace, double faute...) pour les statistiques
+    if current < 11:
+        conn.execute("ALTER TABLE match_points ADD COLUMN nature TEXT NOT NULL DEFAULT ''")
+
+    #version 12 : cote de depart des equipes (realite augmentee, graphiques au sol)
+    if current < 12:
+        conn.execute("ALTER TABLE matches ADD COLUMN first_left INTEGER")
+
     conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     conn.commit()
 
@@ -522,6 +531,7 @@ def _row_to_match(
         first_server=row["first_server"],
         first_server_1=row["first_server_1"],
         first_server_2=row["first_server_2"],
+        first_left=row["first_left"],
         started_at=row["started_at"],
         finished_at=row["finished_at"],
         winner=row["winner"],
@@ -615,25 +625,36 @@ def save_match(match: Match) -> int:
 #equipes gagnantes des points joues, dans l'ordre
 #evenements du match dans l'ordre (format attendu par scoring.compute_state) :
 #equipe gagnante (entier) pour un point, ("server", equipe, joueur) pour un
-#changement de serveur manuel
+#changement de serveur manuel, ("sides",) pour une inversion des cotes
 def get_points(match_id: int) -> list:
     rows = connect().execute(
         "SELECT kind, team, player FROM match_points WHERE match_id = ? ORDER BY id", (match_id,)
     )
-    return [("server", row["team"], row["player"]) if row["kind"] == "server" else row["team"] for row in rows]
+    events = []
+    for row in rows:
+        if row["kind"] == "server":
+            events.append(("server", row["team"], row["player"]))
+        elif row["kind"] == "sides":
+            events.append(("sides",))
+        else:
+            events.append(row["team"])
+    return events
 
 
-#debut du match : service, statut "en cours" (repart de zero si des points
+#debut du match : service, cote de depart (`first_left` : equipe a gauche vu
+#depuis la chaise d'arbitre), statut "en cours" (repart de zero si des points
 #existaient deja)
-def start_match(match_id: int, first_server: int, first_server_1: int, first_server_2: int) -> None:
+def start_match(match_id: int, first_server: int, first_server_1: int, first_server_2: int,
+                first_left: int = 0) -> None:
     conn = connect()
     now = _now()
     with conn:
         conn.execute("DELETE FROM match_points WHERE match_id = ?", (match_id,))
         conn.execute(
-            "UPDATE matches SET first_server = ?, first_server_1 = ?, first_server_2 = ?, status = 'live', "
-            "started_at = ?, finished_at = '', winner = NULL, end_reason = '', updated_at = ? WHERE id = ?",
-            (first_server, first_server_1, first_server_2, now, now, match_id),
+            "UPDATE matches SET first_server = ?, first_server_1 = ?, first_server_2 = ?, first_left = ?, "
+            "status = 'live', started_at = ?, finished_at = '', winner = NULL, end_reason = '', updated_at = ? "
+            "WHERE id = ?",
+            (first_server, first_server_1, first_server_2, first_left, now, now, match_id),
         )
 
 
@@ -643,10 +664,31 @@ def reset_match(match_id: int) -> None:
     with conn:
         conn.execute("DELETE FROM match_points WHERE match_id = ?", (match_id,))
         conn.execute(
-            "UPDATE matches SET first_server = NULL, status = 'scheduled', started_at = '', finished_at = '', "
-            "winner = NULL, end_reason = '', updated_at = ? WHERE id = ?",
+            "UPDATE matches SET first_server = NULL, first_left = NULL, status = 'scheduled', started_at = '', "
+            "finished_at = '', winner = NULL, end_reason = '', updated_at = ? WHERE id = ?",
             (_now(), match_id),
         )
+
+
+#nature de chaque evenement du match, dans le meme ordre que get_points ("" si
+#non precisee ou changement de serveur) - voir scoring.POINT_NATURES
+def get_natures(match_id: int) -> list[str]:
+    rows = connect().execute("SELECT nature FROM match_points WHERE match_id = ? ORDER BY id", (match_id,))
+    return [row["nature"] for row in rows]
+
+
+#nature du DERNIER point joue ("" pour l'effacer) ; sans effet si le dernier
+#evenement n'est pas un point (changement de serveur)
+def set_last_point_nature(match_id: int, nature: str) -> None:
+    conn = connect()
+    with conn:
+        row = conn.execute(
+            "SELECT id, kind FROM match_points WHERE match_id = ? ORDER BY id DESC LIMIT 1", (match_id,)
+        ).fetchone()
+        if row is None or row["kind"] != "point":
+            return
+        conn.execute("UPDATE match_points SET nature = ? WHERE id = ?", (nature, row["id"]))
+        conn.execute("UPDATE matches SET updated_at = ? WHERE id = ?", (_now(), match_id))
 
 
 def add_point(match_id: int, team: int) -> None:
@@ -670,7 +712,20 @@ def add_server_change(match_id: int, team: int, player: int) -> None:
         conn.execute("UPDATE matches SET updated_at = ? WHERE id = ?", (now, match_id))
 
 
-#retire le dernier evenement (point ou changement de serveur) ; False s'il
+#inversion manuelle des cotes (correction, annulable comme un point) : les
+#changements automatiques reprennent ensuite normalement
+def add_side_swap(match_id: int) -> None:
+    conn = connect()
+    now = _now()
+    with conn:
+        conn.execute(
+            "INSERT INTO match_points (match_id, kind, team, created_at) VALUES (?, 'sides', 0, ?)",
+            (match_id, now),
+        )
+        conn.execute("UPDATE matches SET updated_at = ? WHERE id = ?", (now, match_id))
+
+
+#retire le dernier evenement (point, serveur, cotes) ; False s'il
 #n'y en avait aucun
 def remove_last_point(match_id: int) -> bool:
     conn = connect()

@@ -99,8 +99,8 @@ def parse_date(text: str) -> str | None:
 #tailwind de la puce)
 STATUSES: dict[str, tuple[str, str]] = {
     "scheduled": ("PROGRAMME", "slate"),
-    "live": ("EN COURS", "green"),
-    "finished": ("TERMINE", "sky"),
+    "live": ("EN COURS", "red"),
+    "finished": ("TERMINE", "green"),
 }
 
 #statuts AFFICHES : en plus des statuts enregistres, "A VENIR" est calcule
@@ -276,6 +276,10 @@ class Match:
     first_server: int | None = None
     first_server_1: int = 0
     first_server_2: int = 0
+    #equipe a gauche au debut du match, vu depuis la chaise d'arbitre (None =
+    #pas encore debute ; les cotes suivent ensuite les changements, voir
+    #scoring.ScoreState.left_team)
+    first_left: int | None = None
     started_at: str = ""
     finished_at: str = ""
     winner: int | None = None       #0 = equipe 1, 1 = equipe 2

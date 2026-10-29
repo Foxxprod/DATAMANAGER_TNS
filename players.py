@@ -26,6 +26,7 @@ from layout import (
     list_cell,
     list_header,
     page_body,
+    plain_image,
     section_card,
 )
 from models import BACKHANDS, GENDERS, HANDS, Player, format_date
@@ -237,7 +238,7 @@ def player_summary(player: Player) -> None:
             "w-36 h-36 shrink-0 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center"
         ):
             if player.photo:
-                ui.image(PHOTOS.file_url(player.photo, player.updated_at)).classes("w-full h-full").props("fit=cover")
+                plain_image(PHOTOS.file_url(player.photo, player.updated_at)).classes("w-full h-full")
             else:
                 ui.icon("person").classes("text-6xl text-slate-600")
         with ui.column().classes("flex-1 min-w-0 gap-2"):
@@ -279,9 +280,7 @@ def build_player_profile(player: Player, match_count: int) -> ui.dialog:
                 "w-80 shrink-0 bg-slate-900 flex items-center justify-center"
             ).style("min-height: 20rem;"):
                 if player.photo:
-                    ui.image(PHOTOS.file_url(player.photo, player.updated_at)).classes("w-full h-full").props(
-                        "fit=cover"
-                    )
+                    plain_image(PHOTOS.file_url(player.photo, player.updated_at)).classes("w-full h-full")
                 else:
                     with ui.column().classes("items-center gap-2"):
                         ui.icon("person").classes("text-8xl text-slate-600")

@@ -17,7 +17,8 @@ from nicegui import Client, context, ui
 
 import database
 from events import match_scored, subscribe_for
-from layout import UMPIRE_NAV_ITEMS, build_header, flag, page_body, tournament_logo
+from layout import (HEADER_HEIGHT, UMPIRE_FIT, UMPIRE_MATCH_FIT, UMPIRE_NAV_ITEMS, build_header, flag,
+                    full_height, page_body, tournament_logo)
 from models import CATEGORY_LABELS, DISPLAY_STATUSES, Match, format_day
 from players import player_summary
 from scoreboard import scoreboard, team_label
@@ -65,8 +66,8 @@ def _status_chip(status: str, big: bool = False) -> None:
 
 #header des pages d'arbitrage : meme bandeau que la gestion des donnees,
 #avec les onglets d'arbitrage et sans selecteur de tournoi
-def _umpire_header(config: dict, active: str | None) -> None:
-    build_header(config, active, nav_items=UMPIRE_NAV_ITEMS, tournament_selector=False)
+def _umpire_header(config: dict, active: str | None, fit: tuple[int, int] = UMPIRE_FIT) -> None:
+    build_header(config, active, nav_items=UMPIRE_NAV_ITEMS, tournament_selector=False, fit=fit)
 
 
 #score abrege pour les cartes de selection : "6-4 3-2" + points du jeu
@@ -91,7 +92,7 @@ def _short_score(match: Match, state: ScoreState) -> str:
 
 def build_umpire_selection(config: dict) -> None:
     _umpire_header(config, "umpire")
-    state = {"tab": "todo", "signature": None}
+    state = {"tab": "all", "signature": None}
 
     with ui.dialog() as takeover_dialog, ui.card().classes("gap-3 w-[28rem]"):
         ui.label("Match deja arbitre sur un autre poste").classes("text-lg font-bold")
@@ -125,8 +126,10 @@ def build_umpire_selection(config: dict) -> None:
     def match_cards() -> None:
         rows = load()
         state["signature"] = signature(rows)
-        finished = state["tab"] == "done"
-        rows = [row for row in rows if (row[2] == "finished") == finished]
+        #filtres : "todo" (a arbitrer), "done" (termines), "all" (tous)
+        tab = state["tab"]
+        if tab != "all":
+            rows = [row for row in rows if (row[2] == "finished") == (tab == "done")]
         #regroupes par jour (sans date en dernier) ; dans un jour, matchs en
         #cours d'abord, puis par heure
         rows.sort(key=lambda r: (not r[0].scheduled_date, r[0].scheduled_date, STATUS_ORDER.get(r[2], 9),
@@ -134,7 +137,8 @@ def build_umpire_selection(config: dict) -> None:
         if not rows:
             with ui.column().classes("w-full items-center gap-3 py-16"):
                 ui.icon("sports_tennis").classes("text-6xl text-slate-300")
-                ui.label("Aucun match termine" if finished else "Aucun match a arbitrer").classes(
+                empty = {"done": "Aucun match termine", "all": "Aucun match"}.get(tab, "Aucun match a arbitrer")
+                ui.label(empty).classes(
                     "text-lg text-slate-300"
                 )
             return
@@ -159,7 +163,7 @@ def build_umpire_selection(config: dict) -> None:
                 with ui.element("div").classes("w-full grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4"):
                     for match, score, status in day_rows:
                         _match_card(match, score, status, _controller(match.id) not in (None, context.client.id),
-                                    open_match)
+                                    open_match, dimmed=tab == "all" and status == "finished")
 
     def check_updates() -> None:
         if signature(load()) != state["signature"]:
@@ -173,7 +177,8 @@ def build_umpire_selection(config: dict) -> None:
                 state["tab"] = event.value
                 match_cards.refresh()
 
-            ui.toggle({"todo": "A arbitrer", "done": "Termines"}, value="todo", on_change=on_tab).props(
+            ui.toggle({"all": "Tous", "todo": "A arbitrer", "done": "Termines"}, value="all",
+                      on_change=on_tab).props(
                 "no-caps rounded"
             ).classes("bg-white dark:bg-slate-800")
         cards_box = ui.column().classes("w-full gap-8 mt-2")
@@ -184,11 +189,15 @@ def build_umpire_selection(config: dict) -> None:
     ui.timer(3.0, check_updates)
 
 
-def _match_card(match: Match, score: ScoreState | None, status: str, locked: bool, on_open) -> None:
+#`dimmed` : carte legerement grisee (match termine affiche avec le filtre
+#"Tous"), redevient nette au survol
+def _match_card(match: Match, score: ScoreState | None, status: str, locked: bool, on_open,
+                dimmed: bool = False) -> None:
     tournament = match.tournament
     with ui.column().classes(
         "w-full gap-3 rounded-2xl p-5 cursor-pointer bg-white dark:bg-slate-800 shadow-lg "
-        "border-2 border-transparent hover:border-sky-500 transition-colors"
+        "border-2 border-transparent hover:border-sky-500 transition "
+        + ("opacity-60 grayscale-[40%] hover:opacity-100 hover:grayscale-0" if dimmed else "")
     ).on("click", lambda m=match: on_open(m)):
         with ui.row(wrap=False).classes("w-full items-center justify-between gap-3"):
             _status_chip(status)
@@ -243,7 +252,7 @@ POINT_BUTTON_CSS = ".point-button .q-btn__content { width: 100%; min-width: 0; }
 
 
 def build_umpire_match(config: dict, match_id: int) -> None:
-    _umpire_header(config, None)
+    _umpire_header(config, None, UMPIRE_MATCH_FIT)
     ui.add_css(POINT_BUTTON_CSS)
     if database.get_match(match_id) is None:
         with page_body():
@@ -251,11 +260,10 @@ def build_umpire_match(config: dict, match_id: int) -> None:
         return
     _take_control(match_id)
 
-    #inversion gauche/droite des boutons POINT (selon le cote du court ou
-    #l'operateur voit chaque joueur) - propre a ce poste
+    #setup_* : choix en cours avant le debut du match (service, cote de depart)
     #own_updates : evenements match_scored emis par CE poste, a ne pas traiter
     #une 2e fois a leur reception (l'ecran est deja rafraichi directement)
-    view = {"swapped": False, "setup_server": None, "setup_players": [0, 0], "own_updates": 0}
+    view = {"setup_server": None, "setup_players": [0, 0], "setup_left": None, "own_updates": 0}
 
     #match None : supprime entre-temps depuis la gestion des donnees
     def load() -> tuple[Match | None, list, ScoreState | None]:
@@ -285,7 +293,10 @@ def build_umpire_match(config: dict, match_id: int) -> None:
         if view["setup_server"] is None:
             ui.notify("Selectionnez d'abord le premier service", type="warning")
             return
-        database.start_match(match_id, view["setup_server"], *view["setup_players"])
+        if view["setup_left"] is None:
+            ui.notify("Selectionnez d'abord le joueur a gauche", type="warning")
+            return
+        database.start_match(match_id, view["setup_server"], *view["setup_players"], view["setup_left"])
         ui.notify("Match debute", type="positive")
         changed()
 
@@ -310,6 +321,8 @@ def build_umpire_match(config: dict, match_id: int) -> None:
         teams = (match.team1, match.team2)
         if match.end_reason:
             undo_text.text = "L'abandon sera annule et le match reprendra."
+        elif points and points[-1] == ("sides",):
+            undo_text.text = "La derniere inversion des cotes sera annulee."
         elif points and isinstance(points[-1], tuple):
             undo_text.text = "Le dernier changement de serveur sera annule."
         elif points:
@@ -323,7 +336,9 @@ def build_umpire_match(config: dict, match_id: int) -> None:
             database.remove_last_point(match_id)
             if match.status == "finished":
                 database.set_match_result(match_id, None)
-            if isinstance(points[-1], tuple):
+            if points[-1] == ("sides",):
+                ui.notify("Inversion des cotes annulee", type="info")
+            elif isinstance(points[-1], tuple):
                 ui.notify("Changement de serveur annule", type="info")
             else:
                 ui.notify("Dernier point annule", type="info")
@@ -347,11 +362,16 @@ def build_umpire_match(config: dict, match_id: int) -> None:
         changed()
 
     #remise a zero complete : tous les points effaces, retour au choix du service
+    #nature du dernier point (statistiques) : "" efface la nature
+    def set_nature(nature: str) -> None:
+        database.set_last_point_nature(match_id, nature)
+        changed()
+
     async def reset_all() -> None:
         if not await reset_all_dialog:
             return
         database.reset_match(match_id)
-        view["setup_server"] = None
+        view["setup_server"] = view["setup_left"] = None
         ui.notify("Match remis a zero", type="info")
         changed()
 
@@ -364,9 +384,13 @@ def build_umpire_match(config: dict, match_id: int) -> None:
         ui.notify(f"Abandon de {team_label(match.team1 if retiring == 0 else match.team2)}", type="info")
         changed()
 
+    #correction des cotes (les changements automatiques ne correspondent pas
+    #au terrain) : enregistree comme un evenement du match, diffusee aux
+    #graphiques et annulable avec "Annuler le dernier point"
     def swap() -> None:
-        view["swapped"] = not view["swapped"]
-        content.refresh()
+        database.add_side_swap(match_id)
+        ui.notify("Cotes inverses", type="info")
+        changed()
 
     with ui.dialog() as undo_dialog, ui.card().classes("gap-3 w-[30rem]"):
         ui.label("Annuler le dernier point ?").classes("text-lg font-bold")
@@ -448,9 +472,15 @@ def build_umpire_match(config: dict, match_id: int) -> None:
             _setup_view(match, view, start_match, content.refresh)
         else:
             _live_view(match, points, score, view, score_point,
-                       {"undo": undo, "retire": retire, "swap": swap, "server": change_server, "reset": reset_all})
+                       {"undo": undo, "retire": retire, "swap": swap, "server": change_server, "reset": reset_all,
+                        "nature": set_nature},
+                       database.get_natures(match_id))
 
-    with page_body().classes("max-w-[110rem] mx-auto") as body:
+    #page a la hauteur de l'ecran (header et marges de NiceGUI deduits) : les
+    #boutons POINT (flex-1) prennent toute la hauteur restante
+    with page_body().classes("max-w-[110rem] mx-auto").style(
+        f"min-height: {full_height(minus=HEADER_HEIGHT + 32)};"
+    ) as body:
         content()
 
     subscribe_for(match_scored, body, on_match_scored, expect_args=True)
@@ -466,7 +496,8 @@ def build_umpire_match(config: dict, match_id: int) -> None:
             if event.key.backspace and score is not None:
                 return undo()
             return
-        left, right = (1, 0) if view["swapped"] else (0, 1)
+        left = score.left_team(match.first_left or 0)
+        right = 1 - left
         if event.key.arrow_left:
             score_point(left)
         elif event.key.arrow_right:
@@ -547,12 +578,58 @@ def _setup_view(match: Match, view: dict, on_start, refresh) -> None:
                             value=view["setup_players"][index], on_change=choose_player,
                         ).props("no-caps")
 
+        _side_choice(teams, view, refresh)
+
+        ready = view["setup_server"] is not None and view["setup_left"] is not None
         ui.button("DEBUTER LE MATCH", icon="play_arrow", color=None, on_click=on_start).props(
             "no-caps unelevated"
         ).classes(
             "h-20 px-12 rounded-2xl text-2xl font-bold text-white "
-            + ("bg-green-600 hover:bg-green-500" if view["setup_server"] is not None else "bg-slate-400")
+            + ("bg-green-600 hover:bg-green-500" if ready else "bg-slate-400")
         )
+
+
+#cote de depart : quel joueur est a GAUCHE vu depuis la chaise d'arbitre
+#(reference fixe du court, utilisee par les graphiques au sol en realite
+#augmentee) ; apercu du court une fois choisi
+def _side_choice(teams: tuple, view: dict, refresh) -> None:
+    ui.element("div").classes("w-full h-px bg-slate-200 dark:bg-slate-700")
+    with ui.column().classes("items-center gap-0"):
+        ui.label("SELECTIONNER LE JOUEUR A GAUCHE").classes("text-2xl font-bold tracking-wide")
+        ui.label("vu depuis la chaise d'arbitre, au debut du match").classes("text-sm text-slate-500")
+    with ui.row(wrap=False).classes("w-full gap-6 justify-center"):
+        for index, team in enumerate(teams):
+            color = TEAM_COLORS[index]
+            selected = view["setup_left"] == index
+
+            def choose(i=index) -> None:
+                view["setup_left"] = i
+                refresh()
+
+            with ui.button(color=None, on_click=choose).props("no-caps unelevated").classes(
+                f"flex-1 max-w-[32rem] h-20 rounded-2xl border-4 text-xl font-bold "
+                + (f"bg-{color}-500 border-{color}-300 text-white" if selected
+                   else f"bg-{color}-500/10 border-{color}-500/40 text-{color}-600 dark:text-{color}-300")
+            ):
+                with ui.row(wrap=False).classes("items-center gap-3"):
+                    if selected:
+                        ui.icon("west").classes("text-3xl")
+                    ui.label(team_label(team, short=len(team) > 1))
+
+    if view["setup_left"] is None:
+        return
+    left = view["setup_left"]
+    with ui.row(wrap=False).classes(
+        "w-full max-w-[66rem] h-16 items-stretch rounded-xl overflow-hidden border-2 border-white shadow"
+    ):
+        for position, team_index in enumerate((left, 1 - left)):
+            if position:
+                ui.element("div").classes("w-1.5 bg-white")
+            with ui.row(wrap=False).classes(
+                f"flex-1 min-w-0 items-center justify-center gap-2 px-3 bg-{TEAM_COLORS[team_index]}-500 text-white"
+            ):
+                ui.icon("west" if position == 0 else "east").classes("text-2xl")
+                ui.label(team_label(teams[team_index])).classes("text-lg font-bold truncate")
 
 
 #bandeau d'information du point a venir (balle de break/set/match, tie-break,
@@ -579,8 +656,45 @@ def _situation(match: Match, points: list[int], score: ScoreState) -> list[tuple
 
 
 #pendant / apres le match : tableau des scores, situation, boutons POINT, actions
-#`actions` : {"undo", "retire", "swap", "server", "reset"} -> fonction
-def _live_view(match: Match, points: list, score: ScoreState, view: dict, on_point, actions: dict) -> None:
+#barre facultative "nature du dernier point" (statistiques : aces, doubles
+#fautes, coups gagnants, fautes directes). Seules les natures coherentes sont
+#proposees : ace si le gagnant servait, double faute si le perdant servait.
+#Un 2e clic sur la nature choisie l'efface.
+def _nature_bar(match: Match, points: list, natures: list[str], on_nature) -> None:
+    if not points or isinstance(points[-1], tuple) or match.end_reason:
+        return
+    winner = points[-1]
+    server = match_state(match, points[:-1]).server[0]
+    current = natures[-1] if natures else ""
+    options = [("ace", "ACE")] if winner == server else [("double_fault", "DOUBLE FAUTE")]
+    options += [("winner", "COUP GAGNANT"), ("unforced_error", "FAUTE DIRECTE")]
+    with ui.row(wrap=False).classes(
+        "w-full items-center justify-center gap-3 rounded-2xl bg-slate-900/70 px-4 py-3"
+    ):
+        with ui.column().classes("gap-0 shrink-0"):
+            ui.label("NATURE DU DERNIER POINT (facultatif)").classes(
+                "text-xs font-bold tracking-widest text-slate-300"
+            )
+            ui.label(f"gagne par {team_label((match.team1, match.team2)[winner])}").classes(
+                "text-sm font-bold text-white"
+            )
+        for nature, label in options:
+            selected = current == nature
+            ui.button(label, color=None, on_click=lambda n=nature, sel=selected: on_nature("" if sel else n)).props(
+                "no-caps unelevated"
+            ).classes(
+                "h-12 px-5 rounded-xl text-base font-bold "
+                + ("bg-violet-500 text-white ring-2 ring-white" if selected
+                   else "bg-slate-700 text-slate-100 hover:bg-slate-600")
+            )
+        ui.label("Double faute / faute directe : commise par l'adversaire").classes(
+            "text-xs text-slate-400 shrink"
+        )
+
+
+#`actions` : {"undo", "retire", "swap", "server", "reset", "nature"} -> fonction
+def _live_view(match: Match, points: list, score: ScoreState, view: dict, on_point, actions: dict,
+               natures: list[str]) -> None:
     teams = (match.team1, match.team2)
     scoreboard(match, score, big=True)
 
@@ -603,15 +717,18 @@ def _live_view(match: Match, points: list, score: ScoreState, view: dict, on_poi
                     f"text-xl font-bold tracking-wide rounded-full px-6 py-2 bg-{color}-500 text-white shadow"
                 )
 
-        order = (1, 0) if view["swapped"] else (0, 1)
+        #boutons places comme les joueurs sur le court (vu depuis la chaise
+        #d'arbitre) : ils s'echangent a chaque changement de cote
+        left = score.left_team(match.first_left or 0)
+        order = (left, 1 - left)
         server_team = score.server[0]
-        with ui.row(wrap=False).classes("w-full gap-6"):
+        with ui.row(wrap=False).classes("w-full flex-1 min-h-[11rem] max-h-[30rem] items-stretch gap-6"):
             for team in order:
                 color = TEAM_COLORS[team]
                 with ui.button(color=None, on_click=lambda t=team: on_point(t)).props(
                     "no-caps unelevated"
                 ).classes(
-                    f"point-button flex-1 min-w-0 h-[30vh] min-h-[12rem] rounded-3xl bg-{color}-500 hover:bg-{color}-400 "
+                    f"point-button flex-1 min-w-0 rounded-3xl bg-{color}-500 hover:bg-{color}-400 "
                     f"active:scale-[0.98] transition-transform text-white shadow-xl"
                 ):
                     with ui.column().classes("w-full items-center gap-2 px-6"):
@@ -627,9 +744,12 @@ def _live_view(match: Match, points: list, score: ScoreState, view: dict, on_poi
                                 "text-sm font-bold tracking-widest rounded-full px-3 py-0.5 bg-white/25"
                             )
 
+    _nature_bar(match, points, natures, actions["nature"])
+
     #barre d'actions : reglages a gauche, ANNULER au centre (l'action la plus
     #utilisee, bien visible), fin de match / remise a zero a droite
-    secondary = "h-14 px-5 rounded-xl text-base font-bold text-white"
+    #libelles sur 2 lignes si la place manque (tablette) : hauteur libre
+    secondary = "min-h-[3.5rem] px-5 py-1 rounded-xl text-base font-bold leading-tight text-white"
     with ui.element("div").classes("w-full grid grid-cols-[1fr_auto_1fr] items-center gap-4"):
         with ui.row(wrap=False).classes("gap-3 justify-start"):
             if not score.finished:
